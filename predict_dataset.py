@@ -49,7 +49,10 @@ def predict(model_type, img_list, dataloader, predictions_dir):
         else:
             inputs_test = Variable(inputs_test)
 
-        out = model(inputs_test)
+        if model_type == 'u2net':
+            out, d2, d3, d4, d5, d6, d7 = model(inputs_test)
+        else:
+            out = model(inputs_test)
 
         pred = 1.0 - out[:, 0, :, :]
         pred = normPRED(pred)
@@ -85,7 +88,7 @@ image_ext = '.jpg'  # File extension of the images in your dataset
 label_dir = './datasets/ade20k/val/mask/'  # Path to the ground-truth masks of your dataset. Give the same path as above (image_dir) if you do not want to compute the evaluation metrics
 label_ext = '.png'  # File extension of the of the ground-truth masks. Give the same extension as above (image_ext) if you do not have the labels
 pred_dir = './results/'  # Path to the folder where you want to store the predictions.
-model_name = 'fcn'  # Type of model: u2net or unet or fcn
+model_name = 'u2net'  # Type of model: u2net or unet or fcn
 
 num_samples, img_name_list, dataloader = load_data(image_dir, label_dir, image_ext, label_ext)
 predict(model_name, img_name_list, dataloader, pred_dir)
