@@ -11,6 +11,7 @@ from models.u2net import U2NET
 from models.unet import UNet
 from utils.utils import normPRED, save_output, evaluate
 import numpy as np
+import time
 
 
 def predict(model_type, img_list, dataloader, predictions_dir):
@@ -37,9 +38,9 @@ def predict(model_type, img_list, dataloader, predictions_dir):
     if torch.cuda.is_available():
         model.cuda()
     model.eval()
+    timings = []
 
     for i_test, data_test in enumerate(dataloader):
-
         print("inferencing:", img_list[i_test].split(os.sep)[-1])
         inputs_test = data_test['image']
         inputs_test = inputs_test.type(torch.FloatTensor)
@@ -49,6 +50,7 @@ def predict(model_type, img_list, dataloader, predictions_dir):
         else:
             inputs_test = Variable(inputs_test)
 
+        start = time.time()
         if model_type == 'u2net':
             out, d2, d3, d4, d5, d6, d7 = model(inputs_test)
         else:
@@ -57,7 +59,12 @@ def predict(model_type, img_list, dataloader, predictions_dir):
         pred = 1.0 - out[:, 0, :, :]
         pred = normPRED(pred)
 
+        end = time.time()
+        timings.append(end-start)
+
         save_output(img_list[i_test], pred, predictions_dir)
+
+    print('Inference time : {}'.format(np.mean(timings)))
 
 
 def load_data(image_dir, label_dir, image_ext, label_ext):
@@ -88,7 +95,7 @@ image_ext = '.jpg'  # File extension of the images in your dataset
 label_dir = './datasets/ade20k/val/mask/'  # Path to the ground-truth masks of your dataset. Give the same path as above (image_dir) if you do not want to compute the evaluation metrics
 label_ext = '.png'  # File extension of the of the ground-truth masks. Give the same extension as above (image_ext) if you do not have the labels
 pred_dir = './results/'  # Path to the folder where you want to store the predictions.
-model_name = 'u2net'  # Type of model: u2net or unet or fcn
+model_name = 'unet'  # Type of model: u2net or unet or fcn
 
 num_samples, img_name_list, dataloader = load_data(image_dir, label_dir, image_ext, label_ext)
 predict(model_name, img_name_list, dataloader, pred_dir)
